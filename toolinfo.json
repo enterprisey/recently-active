@@ -1,0 +1,9 @@
+{
+    "name" : "recently-active",
+    "title" : "Recently Active Users",
+    "description" : "Find experienced editors that are currently active.",
+    "url" : "http://tools.wmflabs.org/apersonbot/recently-active/",
+    "keywords" : "tools, activity, user",
+    "author" : "Enterprisey",
+    "repository" : "https://github.com/APerson241/recently-active.git"
+}
