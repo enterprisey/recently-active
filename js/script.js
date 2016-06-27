@@ -1,9 +1,11 @@
 document.addEventListener( "DOMContentLoaded", function() {
+    console.log("script.js has loaded");
     const API_ROOT = "https://en.wikipedia.org/w/api.php",
           API_SUFFIX = "&format=json&callback=?&continue=",
           EDIT_COUNT_THRESHOLD = 10000;
     loadJsonp( API_ROOT + "?action=query&list=recentchanges&rcprop=user&rcshow=!bot|!anon&rctype=edit&rclimit=500" + API_SUFFIX )
         .then( function ( data ) {
+	    console.log("JSON req finished");
             if ( !data.query || !data.query.recentchanges ) {
                 document.getElementById( "error" ).innerHTML = "Error loading recent changes!";
                 return;
@@ -31,6 +33,7 @@ document.addEventListener( "DOMContentLoaded", function() {
                 document.getElementById( "loading" ).remove();
             } );
         } ); // end loadJsonp
+    console.log("Initial JSON req sent");
 
     /**
      * Makes a <td> with all sorts of fun links.
