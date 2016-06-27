@@ -45,8 +45,9 @@ document.addEventListener( "DOMContentLoaded", function() {
     // Adapted from https://gist.github.com/gf3/132080/110d1b68d7328d7bfe7e36617f7df85679a08968
     var jsonpUnique = 0;
     function loadJsonp(url) {
+        var unique = jsonpUnique++;
         return new Promise( function ( resolve, reject ) {
-            var name = "_jsonp_" + jsonpUnique++;
+            var name = "_jsonp_" + unique;
             if (url.match(/\?/)) url += "&callback="+name;
             else url += "?callback="+name;
             var script = document.createElement('script');
