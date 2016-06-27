@@ -1,0 +1,53 @@
+body {
+    margin: 40px auto;
+    max-width: 650px;
+    font-size: 16px;
+    color: #333;
+    font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
+    background-color: #F3F3F3;
+}
+
+h1 {
+    font-size: 200%;
+}
+
+h2 {
+    font-size: 130:
+}
+
+h1, h2, h3 {
+    margin-bottom: 0.25em;
+}
+
+button, input[type=submit] {
+    cursor: pointer;
+    font-family: Helvetica, arial, nimbussansl, liberationsans, freesans, clean, sans-serif;
+}
+
+footer {
+    margin-top: 1em;
+    font-size: smaller;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+table {
+    border-collapse: collapse;
+    background-color: white;
+}
+
+td, th {
+    padding: 0.25em;
+    border: thin solid black;
+}
+
+#loading {
+    text-align: center;
+    font-size: 130%;
+}
