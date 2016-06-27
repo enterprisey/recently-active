@@ -3,37 +3,49 @@ document.addEventListener( "DOMContentLoaded", function() {
     const API_ROOT = "https://en.wikipedia.org/w/api.php",
           API_SUFFIX = "&format=json&callback=?&continue=",
           EDIT_COUNT_THRESHOLD = 10000;
-    loadJsonp( API_ROOT + "?action=query&list=recentchanges&rcprop=user&rcshow=!bot|!anon&rctype=edit&rclimit=500" + API_SUFFIX )
-        .then( function ( data ) {
-	    console.log("JSON req finished");
-            if ( !data.query || !data.query.recentchanges ) {
-                document.getElementById( "error" ).innerHTML = "Error loading recent changes!";
-                return;
-            }
 
-            // Get list of users
-            var users = uniq( data.query.recentchanges.map( function ( entry ) { return entry.user; } ) );
+    function load() {
+        document.getElementById( "admin" ).disabled = "disabled";
+        loadJsonp( API_ROOT + "?action=query&list=recentchanges&rcprop=user&rcshow=!bot|!anon&rctype=edit&rclimit=500" + API_SUFFIX )
+            .then( function ( data ) {
+                if ( !data.query || !data.query.recentchanges ) {
+                    document.getElementById( "error" ).innerHTML = "Error loading recent changes!";
+                    return;
+                }
 
-            var editCountPromises = users.map( function ( user ) {
-                return loadJsonp( API_ROOT + "?action=query&list=users&usprop=editcount&ususers=" + user + API_SUFFIX );
-            } );
-            Promise.all(editCountPromises).then( function( results ) {
-                var highCountUsers = [];
-                results.forEach( function ( result ) {
-                    if ( result.query.users[0].editcount > EDIT_COUNT_THRESHOLD ) {
-                        highCountUsers.push( result.query.users[0].name );
-                    }
+                // Get list of users
+                var users = uniq( data.query.recentchanges.map( function ( entry ) { return entry.user; } ) );
+
+                var userInfoPromises = users.map( function ( user ) {
+                    return loadJsonp( API_ROOT + "?action=query&list=users&usprop=editcount|groups&ususers=" + user + API_SUFFIX );
                 } );
-                var table = document.getElementById( "result" );
-                highCountUsers.forEach( function ( user ) {
-                    var newRow = document.createElement( "tr" );
-                    newRow.innerHTML = makeUserCell( user );
-                    table.appendChild( newRow );
+                Promise.all(userInfoPromises).then( function( results ) {
+                    var filteredUsers = [],
+                        filterNonAdmins = document.getElementById( "admin" ).checked;
+                    results.forEach( function ( result ) {
+                        var user = result.query.users[0],
+                        var highEditCount = user.editcount > EDIT_COUNT_THRESHOLD,
+                            notBot = user.groups.indexOf( "bot" ) === -1,
+                            admin = filterNonAdmins && ( user.groups.indexOf( "sysop" ) !== -1 );
+                        if ( highEditCount && notBot && admin ) {
+                            filteredUsers.push( result.query.users[0].name );
+                        }
+                    } );
+                    var table = document.getElementById( "result" );
+                    filteredUsers.forEach( function ( user ) {
+                        var newRow = document.createElement( "tr" );
+                        newRow.innerHTML = makeUserCell( user );
+                        table.appendChild( newRow );
+                    } );
+                    document.getElementById( "loading" ).remove();
+                    document.getElementById( "admin" ).disabled = "";
                 } );
-                document.getElementById( "loading" ).remove();
-            } );
-        } ); // end loadJsonp
-    console.log("Initial JSON req sent");
+            } ); // end loadJsonp
+    }
+
+    load();
+
+    document.getElementById( "admin" ).addEventListener( 'change', load );
 
     /**
      * Makes a <td> with all sorts of fun links.
