@@ -6,6 +6,17 @@ document.addEventListener( "DOMContentLoaded", function() {
 
     function load() {
         document.getElementById( "admin" ).disabled = "disabled";
+
+        var table = document.getElementById( "result" );
+
+        // Clear out table
+        while ( table.firstChild ) {
+            table.removeChild( table.firstChild );
+        }
+
+        // Loading image
+        document.getElementById( "loading" ).innerHTML = "<img src='images/loading.gif' /><br />Loading...";
+
         loadJsonp( API_ROOT + "?action=query&list=recentchanges&rcprop=user&rcshow=!bot|!anon&rctype=edit&rclimit=500" + API_SUFFIX )
             .then( function ( data ) {
                 if ( !data.query || !data.query.recentchanges ) {
@@ -19,25 +30,28 @@ document.addEventListener( "DOMContentLoaded", function() {
                 var userInfoPromises = users.map( function ( user ) {
                     return loadJsonp( API_ROOT + "?action=query&list=users&usprop=editcount|groups&ususers=" + user + API_SUFFIX );
                 } );
-                Promise.all(userInfoPromises).then( function( results ) {
+                Promise.all( userInfoPromises ).then( function( results ) {
                     var filteredUsers = [],
                         filterNonAdmins = document.getElementById( "admin" ).checked;
                     results.forEach( function ( result ) {
                         var user = result.query.users[0],
-                        var highEditCount = user.editcount > EDIT_COUNT_THRESHOLD,
+                            highEditCount = user.editcount > EDIT_COUNT_THRESHOLD,
                             notBot = user.groups.indexOf( "bot" ) === -1,
-                            admin = filterNonAdmins && ( user.groups.indexOf( "sysop" ) !== -1 );
+                            admin = !filterNonAdmins || ( user.groups.indexOf( "sysop" ) !== -1 );
                         if ( highEditCount && notBot && admin ) {
                             filteredUsers.push( result.query.users[0].name );
                         }
                     } );
-                    var table = document.getElementById( "result" );
+
+                    var newRow = document.createElement( "tr" );
+                    newRow.innerHTML = "<th>User</th>";
+                    table.appendChild( newRow );
                     filteredUsers.forEach( function ( user ) {
-                        var newRow = document.createElement( "tr" );
+                        newRow = document.createElement( "tr" );
                         newRow.innerHTML = makeUserCell( user );
                         table.appendChild( newRow );
                     } );
-                    document.getElementById( "loading" ).remove();
+                    document.getElementById( "loading" ).innerHTML = "";
                     document.getElementById( "admin" ).disabled = "";
                 } );
             } ); // end loadJsonp
