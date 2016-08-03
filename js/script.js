@@ -5,7 +5,10 @@ document.addEventListener( "DOMContentLoaded", function() {
           EDIT_COUNT_THRESHOLD = 10000;
 
     function load() {
-        document.getElementById( "admin" ).disabled = "disabled";
+        var filterRadioBtns = document.getElementsByName( "filter" );
+        for(var i = 0; i < filterRadioBtns.length; i++) {
+            filterRadioBtns[i].disabled = "disabled";
+        }
 
         var table = document.getElementById( "result" );
 
@@ -13,6 +16,9 @@ document.addEventListener( "DOMContentLoaded", function() {
         while ( table.firstChild ) {
             table.removeChild( table.firstChild );
         }
+
+        // Clear error
+        document.getElementById( "error" ).innerHTML = "";
 
         // Loading image
         document.getElementById( "loading" ).innerHTML = "<img src='images/loading.gif' /><br />Loading...";
@@ -31,35 +37,45 @@ document.addEventListener( "DOMContentLoaded", function() {
                     return loadJsonp( API_ROOT + "?action=query&list=users&usprop=editcount|groups&ususers=" + user + API_SUFFIX );
                 } );
                 Promise.all( userInfoPromises ).then( function( results ) {
-                    var filteredUsers = [],
-                        filterNonAdmins = document.getElementById( "admin" ).checked;
+                    var filteredUsers = [];
+                    var requiredGroup = document.querySelector('input[name="filter"]:checked').value;
                     results.forEach( function ( result ) {
                         var user = result.query.users[0],
                             highEditCount = user.editcount > EDIT_COUNT_THRESHOLD,
                             notBot = user.groups.indexOf( "bot" ) === -1,
-                            admin = !filterNonAdmins || ( user.groups.indexOf( "sysop" ) !== -1 );
-                        if ( highEditCount && notBot && admin ) {
+                            hasGroup = user.groups.indexOf( requiredGroup ) !== -1;
+                        if ( highEditCount && notBot && hasGroup ) {
                             filteredUsers.push( result.query.users[0].name );
                         }
                     } );
 
-                    var newRow = document.createElement( "tr" );
-                    newRow.innerHTML = "<th>User</th>";
-                    table.appendChild( newRow );
-                    filteredUsers.forEach( function ( user ) {
-                        newRow = document.createElement( "tr" );
-                        newRow.innerHTML = makeUserCell( user );
+                    if(filteredUsers.length) {
+                        var newRow = document.createElement( "tr" );
+                        newRow.innerHTML = "<th>User</th>";
                         table.appendChild( newRow );
-                    } );
+                        filteredUsers.forEach( function ( user ) {
+                            newRow = document.createElement( "tr" );
+                            newRow.innerHTML = makeUserCell( user );
+                            table.appendChild( newRow );
+                        } );
+                    } else {
+                        document.getElementById( "error" ).innerHTML = "No user in the <tt>" + requiredGroup + "</tt> group has edited recently.";
+                    }
                     document.getElementById( "loading" ).innerHTML = "";
-                    document.getElementById( "admin" ).disabled = "";
+                    for(var i = 0; i < filterRadioBtns.length; i++) {
+                        filterRadioBtns[i].disabled = "";
+                    }
                 } );
             } ); // end loadJsonp
     }
 
     load();
 
-    document.getElementById( "admin" ).addEventListener( 'change', load );
+
+    var filterRadioBtns = document.getElementsByName( "filter" );
+    for(var i = 0; i < filterRadioBtns.length; i++) {
+        filterRadioBtns[i].addEventListener( 'click', load );
+    }
 
     /**
      * Makes a <td> with all sorts of fun links.

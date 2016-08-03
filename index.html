@@ -11,7 +11,10 @@
     <p style="font-size: 80%"><a href="https://tools.wmflabs.org/apersonbot/">Tools</a> &gt; <b>Recently Active Users</b></p>
     <p>This tool searches for experienced editors that have recently edited. It's an attempt at a replacement for <a href="https://en.wikipedia.org/wiki/Wikipedia:HAU">WP:HAU</a>. Please note that many of these editors may be quite busy; try to only contact those editors that seem to be replying to people on their talk pages.</p>
     <p>
-      <input type="checkbox" id="admin" /><label for="admin">Admins only</label>
+      Show:&nbsp;
+      <input type="radio" name="filter" id="everyone" value="*" checked /><label for="everyone">Everyone</label>
+      <input type="radio" name="filter" id="admins" value="sysop" /><label for="admins">Admins only</label>
+      <input type="radio" name="filter" id="crats" value="bureaucrat" /><label for="crats">Bureaucrats only</label>
     </p>
     <div id="loading"></div>
     <table id="result"></table>
