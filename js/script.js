@@ -59,7 +59,7 @@ document.addEventListener( "DOMContentLoaded", function() {
                             table.appendChild( newRow );
                         } );
                     } else {
-                        document.getElementById( "error" ).innerHTML = "No user in the <tt>" + requiredGroup + "</tt> group has edited recently.";
+                        document.getElementById( "error" ).innerHTML = "No user in the <tt>" + requiredGroup + "</tt> group has edited very recently.";
                     }
                     document.getElementById( "loading" ).innerHTML = "";
                     for(var i = 0; i < filterRadioBtns.length; i++) {
