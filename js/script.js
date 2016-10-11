@@ -38,7 +38,7 @@ document.addEventListener( "DOMContentLoaded", function() {
                 } );
                 Promise.all( userInfoPromises ).then( function( results ) {
                     var filteredUsers = [];
-                    var requiredGroup = document.querySelector('input[name="filter"]:checked').value;
+                    var requiredGroup = document.querySelector( 'input[name="filter"]:checked' ).value;
                     results.forEach( function ( result ) {
                         var user = result.query.users[0],
                             highEditCount = user.editcount > EDIT_COUNT_THRESHOLD,
