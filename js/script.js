@@ -34,7 +34,7 @@ document.addEventListener( "DOMContentLoaded", function() {
                 var users = uniq( data.query.recentchanges.map( function ( entry ) { return entry.user; } ) );
 
                 var userInfoPromises = users.map( function ( user ) {
-                    return loadJsonp( API_ROOT + "?action=query&list=users&usprop=editcount|groups&ususers=" + user + API_SUFFIX );
+                    return loadJsonp( API_ROOT + "?action=query&list=users&usprop=editcount|groups&ususers=" + encodeURIComponent( user ) + API_SUFFIX );
                 } );
                 Promise.all( userInfoPromises ).then( function( results ) {
                     var filteredUsers = [];
