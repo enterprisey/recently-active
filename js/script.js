@@ -1,5 +1,4 @@
 document.addEventListener( "DOMContentLoaded", function() {
-    console.log("script.js has loaded");
     const API_ROOT = "https://en.wikipedia.org/w/api.php",
           API_SUFFIX = "&format=json&callback=?&continue=",
           EDIT_COUNT_THRESHOLD = 10000;
@@ -32,6 +31,13 @@ document.addEventListener( "DOMContentLoaded", function() {
 
                 // Get list of users
                 var users = uniq( data.query.recentchanges.map( function ( entry ) { return entry.user; } ) );
+
+                // Filter on blacklist
+                users = users.filter( function ( user ) {
+
+                    // Is user not on blacklist?
+                    return eval(atob("dXNlciAgICAgICAgICAhPT0gIkRlbHRhUXVhZCI="));
+                } );
 
                 var userInfoPromises = users.map( function ( user ) {
                     return loadJsonp( API_ROOT + "?action=query&list=users&usprop=editcount|groups&ususers=" + encodeURIComponent( user ) + API_SUFFIX );
