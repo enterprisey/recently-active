@@ -41,11 +41,20 @@ document.addEventListener( "DOMContentLoaded", function() {
 
                 var userInfoPromises = users.map( function ( user ) {
                     return loadJsonp( API_ROOT + "?action=query&list=users&usprop=editcount|groups&ususers=" + encodeURIComponent( user ) + API_SUFFIX );
+                } ).map( function( promise ) {
+
+                    // If a call fails, we really don't care
+                    return new Promise( function ( resolve ) {
+                        promise
+                            .then( function ( x ) { resolve( x ); } )
+                            .catch( function ( x ) { resolve( null ); } );
+                    } );
                 } );
                 Promise.all( userInfoPromises ).then( function( results ) {
                     var filteredUsers = [];
                     var requiredGroup = document.querySelector( 'input[name="filter"]:checked' ).value;
                     results.forEach( function ( result ) {
+                        if( result === null ) return;
                         var user = result.query.users[0],
                             highEditCount = user.editcount > EDIT_COUNT_THRESHOLD,
                             notBot = user.groups.indexOf( "bot" ) === -1,
@@ -104,6 +113,7 @@ document.addEventListener( "DOMContentLoaded", function() {
             var script = document.createElement('script');
             script.type = 'text/javascript';
             script.src = url;
+            script.onerror = function() { reject(); };
             window[name] = function(data) {
                 resolve(data);
                 document.getElementsByTagName('head')[0].removeChild(script);
@@ -111,6 +121,9 @@ document.addEventListener( "DOMContentLoaded", function() {
                 delete window[name];
             };
             document.getElementsByTagName('head')[0].appendChild(script);
+
+            // Timeout
+            window.setTimeout( reject, 15 );
         } );
     }
 
