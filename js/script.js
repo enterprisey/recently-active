@@ -121,9 +121,6 @@ document.addEventListener( "DOMContentLoaded", function() {
                 delete window[name];
             };
             document.getElementsByTagName('head')[0].appendChild(script);
-
-            // Timeout
-            window.setTimeout( reject, 15 );
         } );
     }
 
