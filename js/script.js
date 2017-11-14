@@ -5,7 +5,18 @@ document.addEventListener( "DOMContentLoaded", function() {
 
     function load() {
         var filterRadioBtns = document.getElementsByName( "filter" );
+
+        // Get the selected filter from the query string
+        var search = document.location.search.replace ("?", "" );
+        var equalsIdx = search.lastIndexOf( "=" );
+        var chosenFilter = search
+                ? ( ( equalsIdx >= 0 ) ? search.substr( equalsIdx ) : search )
+                : "";
+
         for(var i = 0; i < filterRadioBtns.length; i++) {
+            if( chosenFilter === filterRadioBtns[i].id ) {
+                filterRadioBtns[i].checked = true;
+            }
             filterRadioBtns[i].disabled = "disabled";
         }
 
