@@ -3,7 +3,7 @@ document.addEventListener( "DOMContentLoaded", function() {
           API_SUFFIX = "&format=json&callback=?&continue=",
           EDIT_COUNT_THRESHOLD = 10000;
 
-    function load() {
+    function applyUrlFilter() {
         var filterRadioBtns = document.getElementsByName( "filter" );
 
         // Get the selected filter from the query string
@@ -12,17 +12,21 @@ document.addEventListener( "DOMContentLoaded", function() {
         var chosenFilter = search
                 ? ( ( equalsIdx >= 0 ) ? search.substr( equalsIdx ) : search )
                 : "";
-
         for(var i = 0; i < filterRadioBtns.length; i++) {
             if( chosenFilter === filterRadioBtns[i].id ) {
                 filterRadioBtns[i].checked = true;
             }
+        }
+    }
+
+    function load() {
+        var filterRadioBtns = document.getElementsByName( "filter" );
+
+        for(var i = 0; i < filterRadioBtns.length; i++) {
             filterRadioBtns[i].disabled = "disabled";
         }
 
         var table = document.getElementById( "result" );
-
-        // Clear out table
         while ( table.firstChild ) {
             table.removeChild( table.firstChild );
         }
@@ -95,6 +99,7 @@ document.addEventListener( "DOMContentLoaded", function() {
             } ); // end loadJsonp
     }
 
+    applyUrlFilter();
     load();
 
 
