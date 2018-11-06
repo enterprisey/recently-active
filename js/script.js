@@ -112,7 +112,16 @@ document.addEventListener( "DOMContentLoaded", function() {
      * Makes a <td> with all sorts of fun links.
      */
     function makeUserCell ( username ) {
-        return "<td><a href='https://en.wikipedia.org/wiki/User:" + username + "' title='Wikipedia user page of " + username + "'>" + username + "</a> (<a href='https://en.wikipedia.org/wiki/User talk:" + username + "' title='Wikipedia user talk page of " + username + "'>talk</a> &middot; <a href='https://en.wikipedia.org/wiki/Special:Contributions/" + username + "' title='Wikipedia contributions of " + username + "'>contribs</a>)</td>";
+        var encUsername = encodeURIComponent( username ).replace( "'", "%27" ),
+            escQuotUsername = username.replace( "'", "&#39" );
+        return "<td><a href='https://en.wikipedia.org/wiki/User:" + encUsername +
+            "' title='Wikipedia user page of " + escQuotUsername + "'>" +
+            username + "</a> (<a href='https://en.wikipedia.org/wiki/User talk:" +
+            encUsername + "' title='Wikipedia user talk page of " +
+            escQuotUsername + "'>talk</a> &middot; <a " +
+            "href='https://en.wikipedia.org/wiki/Special:Contributions/" +
+            encUsername + "' title='Wikipedia contributions of " +
+            escQuotUsername + "'>contribs</a>)</td>";
     }
 
     // Utility functions
