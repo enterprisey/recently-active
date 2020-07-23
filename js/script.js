@@ -51,7 +51,7 @@ document.addEventListener( "DOMContentLoaded", function() {
                 users = users.filter( function ( user ) {
 
                     // Is user not on blacklist?
-                    return eval(atob("dXNlciAgICAgICAgICAhPT0gIkRlbHRhUXVhZCI="));
+                    return eval(atob("dXNlciAhPT0gIkFtYW5kYU5QIg=="));
                 } );
 
                 var userInfoPromises = users.map( function ( user ) {
