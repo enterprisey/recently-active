@@ -1,6 +1,7 @@
 document.addEventListener( "DOMContentLoaded", function() {
     const API_ROOT = "https://en.wikipedia.org/w/api.php",
-          API_SUFFIX = "&format=json&callback=?&continue=",
+          API_SUFFIX = "&formatversion=2&format=json&callback=?&continue=",
+          OPT_OUT_LIST = "User:Enterprisey/recently-active-opt-out.json",
           EDIT_COUNT_THRESHOLD = 10000;
 
     function applyUrlFilter() {
@@ -37,66 +38,77 @@ document.addEventListener( "DOMContentLoaded", function() {
         // Loading image
         document.getElementById( "loading" ).innerHTML = "<img src='images/loading.gif' /><br />Loading...";
 
-        loadJsonp( API_ROOT + "?action=query&list=recentchanges&rcprop=user&rcshow=!bot|!anon&rctype=edit&rclimit=500" + API_SUFFIX )
-            .then( function ( data ) {
-                if ( !data.query || !data.query.recentchanges ) {
-                    document.getElementById( "error" ).innerHTML = "Error loading recent changes!";
-                    return;
-                }
+        Promise.all( [
+            loadJsonp( API_ROOT + "?action=query&list=recentchanges&rcprop=user&rcshow=!bot|!anon&rctype=edit&rclimit=500" + API_SUFFIX ),
+            loadJsonp( API_ROOT + "?action=query&prop=revisions&titles=" + OPT_OUT_LIST + "&rvslots=main&rvprop=content" + API_SUFFIX )
+        ] ).then( function ( data ) {
+            var rcData = data[0],
+                optOutData = data[1];
 
-                // Get list of users
-                var users = uniq( data.query.recentchanges.map( function ( entry ) { return entry.user; } ) );
+            if ( !rcData.query || !rcData.query.recentchanges ) {
+                console.error(rcData);
+                document.getElementById( "error" ).innerHTML = "Error loading recent changes!";
+                return;
+            }
 
-                // Filter on blacklist
-                users = users.filter( function ( user ) {
+            if( !optOutData.query || !optOutData.query.pages[0].revisions[0].slots.main.content ) {
+                console.error(optOutData);
+                document.getElementById( "error" ).innerHTML = "Error loading opt-out list at <a href='https://en.wikipedia.org/wiki/" + OPT_OUT_LIST + "'>" + OPT_OUT_LIST + "</a>!";
+                return;
+            }
 
-                    // Is user not on blacklist?
-                    return eval(atob("dXNlciAgICAgICAgICAhPT0gIkRlbHRhUXVhZCI="));
+            // Get list of users
+            var users = uniq( rcData.query.recentchanges.map( function ( entry ) { return entry.user; } ) );
+
+            // Apply opt-out
+            var optOutList = JSON.parse( optOutData.query.pages[0].revisions[0].slots.main.content );
+            users = users.filter( function ( user ) {
+                return optOutList.indexOf( user ) < 0;
+            } );
+
+            var userInfoPromises = users.map( function ( user ) {
+                return loadJsonp( API_ROOT + "?action=query&list=users&usprop=editcount|groups&ususers=" + encodeURIComponent( user ) + API_SUFFIX );
+            } ).map( function( promise ) {
+
+                // If a call fails, we really don't care
+                return new Promise( function ( resolve ) {
+                    promise
+                        .then( function ( x ) { resolve( x ); } )
+                        .catch( function ( x ) { resolve( null ); } );
+                } );
+            } );
+            Promise.all( userInfoPromises ).then( function( results ) {
+                var filteredUsers = [];
+                var requiredGroup = document.querySelector( 'input[name="filter"]:checked' ).value;
+                results.forEach( function ( result ) {
+                    if( result === null ) return;
+                    var user = result.query.users[0],
+                        highEditCount = user.editcount > EDIT_COUNT_THRESHOLD,
+                        notBot = user.groups.indexOf( "bot" ) === -1,
+                        hasGroup = user.groups.indexOf( requiredGroup ) !== -1;
+                    if ( highEditCount && notBot && hasGroup ) {
+                        filteredUsers.push( result.query.users[0].name );
+                    }
                 } );
 
-                var userInfoPromises = users.map( function ( user ) {
-                    return loadJsonp( API_ROOT + "?action=query&list=users&usprop=editcount|groups&ususers=" + encodeURIComponent( user ) + API_SUFFIX );
-                } ).map( function( promise ) {
-
-                    // If a call fails, we really don't care
-                    return new Promise( function ( resolve ) {
-                        promise
-                            .then( function ( x ) { resolve( x ); } )
-                            .catch( function ( x ) { resolve( null ); } );
-                    } );
-                } );
-                Promise.all( userInfoPromises ).then( function( results ) {
-                    var filteredUsers = [];
-                    var requiredGroup = document.querySelector( 'input[name="filter"]:checked' ).value;
-                    results.forEach( function ( result ) {
-                        if( result === null ) return;
-                        var user = result.query.users[0],
-                            highEditCount = user.editcount > EDIT_COUNT_THRESHOLD,
-                            notBot = user.groups.indexOf( "bot" ) === -1,
-                            hasGroup = user.groups.indexOf( requiredGroup ) !== -1;
-                        if ( highEditCount && notBot && hasGroup ) {
-                            filteredUsers.push( result.query.users[0].name );
-                        }
-                    } );
-
-                    if(filteredUsers.length) {
-                        var newRow = document.createElement( "tr" );
-                        newRow.innerHTML = "<th>User</th>";
+                if(filteredUsers.length) {
+                    var newRow = document.createElement( "tr" );
+                    newRow.innerHTML = "<th>User</th>";
+                    table.appendChild( newRow );
+                    filteredUsers.forEach( function ( user ) {
+                        newRow = document.createElement( "tr" );
+                        newRow.innerHTML = makeUserCell( user );
                         table.appendChild( newRow );
-                        filteredUsers.forEach( function ( user ) {
-                            newRow = document.createElement( "tr" );
-                            newRow.innerHTML = makeUserCell( user );
-                            table.appendChild( newRow );
-                        } );
-                    } else {
-                        document.getElementById( "error" ).innerHTML = "No user in the <tt>" + requiredGroup + "</tt> group has edited very recently.";
-                    }
-                    document.getElementById( "loading" ).innerHTML = "";
-                    for(var i = 0; i < filterRadioBtns.length; i++) {
-                        filterRadioBtns[i].disabled = "";
-                    }
-                } );
-            } ); // end loadJsonp
+                    } );
+                } else {
+                    document.getElementById( "error" ).innerHTML = "No user in the <tt>" + requiredGroup + "</tt> group has edited very recently.";
+                }
+                document.getElementById( "loading" ).innerHTML = "";
+                for(var i = 0; i < filterRadioBtns.length; i++) {
+                    filterRadioBtns[i].disabled = "";
+                }
+            } );
+        } ); // end loadJsonp
     }
 
     applyUrlFilter();
@@ -130,7 +142,8 @@ document.addEventListener( "DOMContentLoaded", function() {
     // Adapted from https://gist.github.com/gf3/132080/110d1b68d7328d7bfe7e36617f7df85679a08968
     var jsonpUnique = 0;
     function loadJsonp(url) {
-        var unique = jsonpUnique++;
+        jsonpUnique = ( jsonpUnique || 0 ) + 1;
+        var unique = jsonpUnique;
         return new Promise( function ( resolve, reject ) {
             var name = "_jsonp_" + unique;
             if (url.match(/\?/)) url += "&callback="+name;
@@ -146,7 +159,7 @@ document.addEventListener( "DOMContentLoaded", function() {
                 delete window[name];
             };
             document.getElementsByTagName('head')[0].appendChild(script);
-        } );
+        }.bind( this ) );
     }
 
     // From http://stackoverflow.com/a/9229821/1757964
